@@ -1,6 +1,11 @@
 # Build
 
-FROM php:apache AS build
+FROM php:8.4-apache AS build
+
+ARG CI_COMMIT_TAG=unknown
+ARG CI_COMMIT_REF_NAME=unknown
+ARG CI_COMMIT_SHA=unknown
+ARG CI_COMMIT_SHORT_SHA=unknown
 
 WORKDIR /build
 
@@ -20,12 +25,7 @@ RUN wget -q https://use.fontawesome.com/releases/v5.0.6/fontawesome-free-5.0.6.z
 
 RUN git clone --branch v1.5.0 --depth 1 https://github.com/ajaxorg/ace-builds.git
 
-COPY .git .git/
-RUN CI_COMMIT_TAG=$(git describe --tags) \
-    CI_COMMIT_REF_NAME=$(git rev-parse --abbrev-ref HEAD) \
-    CI_COMMIT_SHA=$(git rev-parse --verify HEAD) \
-    CI_COMMIT_SHORT_SHA=$(git rev-parse --verify HEAD | head -c 8) \
-    && echo "<?php return ['tag' => '$CI_COMMIT_TAG', 'sha' => '$CI_COMMIT_SHA', 'short_sha' => '$CI_COMMIT_SHORT_SHA','ref_name'=>'$CI_COMMIT_REF_NAME'];" > version.php
+RUN echo "<?php return ['tag' => '$CI_COMMIT_TAG', 'sha' => '$CI_COMMIT_SHA', 'short_sha' => '$CI_COMMIT_SHORT_SHA','ref_name'=>'$CI_COMMIT_REF_NAME'];" > version.php
 
 COPY php php/
 COPY composer.json composer.lock ./
@@ -37,7 +37,7 @@ RUN composer install --prefer-dist --no-dev --no-autoloader --no-scripts --no-pr
 
 
 # Runtime
-FROM php:apache
+FROM php:8.4-apache
 
 WORKDIR /var/www/html
 
